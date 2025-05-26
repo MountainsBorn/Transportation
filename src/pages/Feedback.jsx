@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useState } from 'react';
 import { FaStar, FaTruck, FaUserTie, FaPhoneAlt, FaComments } from 'react-icons/fa';
 import BackButton from '../components/BackButton';
+import emailjs from '@emailjs/browser';
 
 const FeedbackContainer = styled.div`
   min-height: 100vh;
@@ -219,11 +220,36 @@ const Feedback = () => {
   const [rating, setRating] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ category, rating, feedback });
-    setSubmitted(true);
+    setIsSubmitting(true);
+
+    try {
+      await emailjs.send(
+        'service_b2pobgw',
+        'template_pv7ivdv',
+        {
+          from_name: 'Feedback Submission',
+          from_email: 'feedback@transport.com',
+          message: `
+Category: ${category}
+Rating: ${rating} ${ratings.find(r => r.value === rating)?.emoji}
+Feedback: ${feedback}
+          `,
+          to_name: 'Admin',
+        },
+        'fWsCpY_rdwAtBmYZz'
+      );
+      
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Failed to send feedback:', error);
+      alert('Failed to send feedback. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const ratings = [
@@ -345,9 +371,9 @@ const Feedback = () => {
             type="submit"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            disabled={!rating || !category}
+            disabled={!rating || !category || isSubmitting}
           >
-            Submit Feedback
+            {isSubmitting ? 'Sending...' : 'Submit Feedback'}
           </SubmitButton>
         </FeedbackForm>
       </FeedbackContent>

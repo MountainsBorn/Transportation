@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaDirections } from "react-icons/fa";
 import contactHeroImg from "../assets/contact.jpg";
 import BackButton from '../components/BackButton';
+import emailjs from '@emailjs/browser';
 
 const ContactContainer = styled.div`
   min-height: 100vh;
@@ -299,6 +300,46 @@ const ThankYouBox = styled(motion.div)`
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const sendEmail = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      await emailjs.send(
+        'service_b2pobgw', // Replace with your EmailJS service ID
+        'template_yec3kjq', // Replace with your EmailJS template ID
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          message: formData.message,
+          to_name: 'Admin', // Replace with recipient name
+        },
+        'fWsCpY_rdwAtBmYZz' // Replace with your EmailJS public key
+      );
+      
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      alert('Failed to send message. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -408,15 +449,35 @@ export default function Contact() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ delay: 0.8, duration: 0.7, ease: "easeOut" }}
-            onSubmit={e => {
-              e.preventDefault();
-              setSubmitted(true);
-            }}
+            onSubmit={sendEmail}
           >
-            <input type="text" placeholder="Your Name" required />
-            <input type="email" placeholder="Your Email" required />
-            <textarea rows={4} placeholder="Your Message" required />
-            <button type="submit">Send Message</button>
+            <input 
+              type="text" 
+              name="name"
+              placeholder="Your Name" 
+              value={formData.name}
+              onChange={handleInputChange}
+              required 
+            />
+            <input 
+              type="email" 
+              name="email"
+              placeholder="Your Email" 
+              value={formData.email}
+              onChange={handleInputChange}
+              required 
+            />
+            <textarea 
+              rows={4} 
+              name="message"
+              placeholder="Your Message" 
+              value={formData.message}
+              onChange={handleInputChange}
+              required 
+            />
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Sending...' : 'Send Message'}
+            </button>
           </ContactForm>
         ) : (
           <ThankYouBox
